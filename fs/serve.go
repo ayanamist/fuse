@@ -542,7 +542,9 @@ func (c *Server) dropNode(id fuse.NodeID, n uint64) (forget bool) {
 		// this should only happen if refcounts kernel<->us disagree
 		// *and* two ForgetRequests for the same node race each other;
 		// this indicates a bug somewhere
-		c.debug(nodeRefcountDropBug{N: n, Node: id})
+		if c.debug != nil {
+			c.debug(nodeRefcountDropBug{N: n, Node: id})
+		}
 
 		// we may end up triggering Forget twice, but that's better
 		// than not even once, and that's the best we can do
@@ -550,7 +552,9 @@ func (c *Server) dropNode(id fuse.NodeID, n uint64) (forget bool) {
 	}
 
 	if n > snode.refs {
-		c.debug(nodeRefcountDropBug{N: n, Refs: snode.refs, Node: id})
+		if c.debug != nil {
+			c.debug(nodeRefcountDropBug{N: n, Refs: snode.refs, Node: id})
+		}
 		n = snode.refs
 	}
 
@@ -589,10 +593,12 @@ func (c *Server) getHandle(id fuse.HandleID) (shandle *serveHandle) {
 		shandle = c.handle[uint(id)]
 	}
 	if shandle == nil {
-		c.debug(missingHandle{
-			Handle:    id,
-			MaxHandle: fuse.HandleID(len(c.handle)),
-		})
+		if c.debug != nil {
+			c.debug(missingHandle{
+				Handle:    id,
+				MaxHandle: fuse.HandleID(len(c.handle)),
+			})
+		}
 	}
 	return
 }
@@ -778,11 +784,13 @@ func (c *Server) serve(r fuse.Request) {
 		ctx = c.context(ctx, r)
 	}
 
-	c.debug(request{
-		Op:      opName(r),
-		Request: r.Hdr(),
-		In:      r,
-	})
+	if c.debug != nil {
+		c.debug(request{
+			Op:      opName(r),
+			Request: r.Hdr(),
+			In:      r,
+		})
+	}
 	var node Node
 	var snode *serveNode
 	c.meta.Lock()
@@ -793,17 +801,19 @@ func (c *Server) serve(r fuse.Request) {
 		}
 		if snode == nil {
 			c.meta.Unlock()
-			c.debug(response{
-				Op:      opName(r),
-				Request: logResponseHeader{ID: hdr.ID},
-				Error:   fuse.ESTALE.ErrnoName(),
-				// this is the only place that sets both Error and
-				// Out; not sure if i want to do that; might get rid
-				// of len(c.node) things altogether
-				Out: logMissingNode{
-					MaxNode: fuse.NodeID(len(c.node)),
-				},
-			})
+			if c.debug != nil {
+				c.debug(response{
+					Op:      opName(r),
+					Request: logResponseHeader{ID: hdr.ID},
+					Error:   fuse.ESTALE.ErrnoName(),
+					// this is the only place that sets both Error and
+					// Out; not sure if i want to do that; might get rid
+					// of len(c.node) things altogether
+					Out: logMissingNode{
+						MaxNode: fuse.NodeID(len(c.node)),
+					},
+				})
+			}
 			r.RespondError(fuse.ESTALE)
 			return
 		}
@@ -844,7 +854,9 @@ func (c *Server) serve(r fuse.Request) {
 		} else {
 			msg.Out = resp
 		}
-		c.debug(msg)
+		if c.debug != nil {
+			c.debug(msg)
+		}
 
 		c.meta.Lock()
 		delete(c.req, hdr.ID)
@@ -999,10 +1011,12 @@ func (c *Server) handleRequest(ctx context.Context, node Node, snode *serveNode,
 		}
 		c.meta.Unlock()
 		if oldNode == nil {
-			c.debug(logLinkRequestOldNodeNotFound{
-				Request: r.Hdr(),
-				In:      r,
-			})
+			if c.debug != nil {
+				c.debug(logLinkRequestOldNodeNotFound{
+					Request: r.Hdr(),
+					In:      r,
+				})
+			}
 			return fuse.EIO
 		}
 		n2, err := n.Link(ctx, r, oldNode.node)
@@ -1339,10 +1353,12 @@ func (c *Server) handleRequest(ctx context.Context, node Node, snode *serveNode,
 		}
 		c.meta.Unlock()
 		if newDirNode == nil {
-			c.debug(renameNewDirNodeNotFound{
-				Request: r.Hdr(),
-				In:      r,
-			})
+			if c.debug != nil {
+				c.debug(renameNewDirNodeNotFound{
+					Request: r.Hdr(),
+					In:      r,
+				})
+			}
 			return fuse.EIO
 		}
 		n, ok := node.(NodeRenamer)
