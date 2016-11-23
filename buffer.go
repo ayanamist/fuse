@@ -26,14 +26,6 @@ func (w *buffer) alloc(size uintptr) unsafe.Pointer {
 	return unsafe.Pointer(&(*w)[l])
 }
 
-// reset clears out the contents of the buffer.
-func (w *buffer) reset() {
-	for i := range (*w)[:cap(*w)] {
-		(*w)[i] = 0
-	}
-	*w = (*w)[:0]
-}
-
 func newBuffer(extra uintptr) buffer {
 	buf := make(buffer, hdrSize, hdrSize+extra)
 	return buf
