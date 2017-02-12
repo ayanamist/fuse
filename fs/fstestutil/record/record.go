@@ -6,7 +6,7 @@ import (
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	"golang.org/x/net/context"
+	"context"
 )
 
 // Writes gathers data from FUSE Write calls.

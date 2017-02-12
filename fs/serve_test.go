@@ -22,7 +22,7 @@ import (
 	"bazil.org/fuse/fs/fstestutil/record"
 	"bazil.org/fuse/fuseutil"
 	"bazil.org/fuse/syscallx"
-	"golang.org/x/net/context"
+	"context"
 )
 
 // TO TEST:

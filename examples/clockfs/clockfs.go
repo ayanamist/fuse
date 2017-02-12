@@ -15,7 +15,7 @@ import (
 	"bazil.org/fuse/fs"
 	_ "bazil.org/fuse/fs/fstestutil"
 	"bazil.org/fuse/fuseutil"
-	"golang.org/x/net/context"
+	"context"
 )
 
 func usage() {
