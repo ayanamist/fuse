@@ -217,17 +217,16 @@ type NodeMknoder interface {
 	Mknod(ctx context.Context, req *fuse.MknodRequest) (Node, error)
 }
 
-// TODO this should be on Handle not Node
-type NodeFsyncer interface {
-	Fsync(ctx context.Context, req *fuse.FsyncRequest) error
-}
-
 type NodeGetxattrer interface {
 	// Getxattr gets an extended attribute by the given name from the
 	// node.
 	//
 	// If there is no xattr by that name, returns fuse.ErrNoXattr.
 	Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fuse.GetxattrResponse) error
+}
+
+type HandleFsyncer interface {
+	Fsync(ctx context.Context, req *fuse.FsyncRequest) error
 }
 
 type NodeListxattrer interface {
@@ -1384,11 +1383,19 @@ func (c *Server) handleRequest(ctx context.Context, node Node, snode *serveNode,
 		return nil
 
 	case *fuse.FsyncRequest:
-		n, ok := node.(NodeFsyncer)
+		shandle := c.getHandle(r.Handle)
+		if shandle == nil {
+			done(fuse.ESTALE)
+			r.RespondError(fuse.ESTALE)
+			return fuse.ESTALE
+		}
+		handle := shandle.handle
+
+		h, ok := handle.(HandleFsyncer)
 		if !ok {
 			return fuse.EIO
 		}
-		err := n.Fsync(ctx, r)
+		err := h.Fsync(ctx, r)
 		if err != nil {
 			return err
 		}

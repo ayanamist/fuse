@@ -7,10 +7,11 @@ import (
 	"path"
 	"testing"
 
+	"context"
+
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	"bazil.org/fuse/fs/fstestutil"
-	"context"
 )
 
 type benchConfig struct {
@@ -62,8 +63,8 @@ type benchFile struct {
 
 var _ = fs.Node(benchFile{})
 var _ = fs.NodeOpener(benchFile{})
-var _ = fs.NodeFsyncer(benchFile{})
 var _ = fs.Handle(benchFile{})
+var _ = fs.HandleFsyncer(benchFile{})
 var _ = fs.HandleReader(benchFile{})
 var _ = fs.HandleWriter(benchFile{})
 

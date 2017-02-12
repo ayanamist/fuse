@@ -4,9 +4,10 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"context"
+
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	"context"
 )
 
 // Writes gathers data from FUSE Write calls.
@@ -139,7 +140,7 @@ type Fsyncs struct {
 	rec RequestRecorder
 }
 
-var _ = fs.NodeFsyncer(&Fsyncs{})
+var _ = fs.HandleFsyncer(&Fsyncs{})
 
 func (r *Fsyncs) Fsync(ctx context.Context, req *fuse.FsyncRequest) error {
 	tmp := *req
