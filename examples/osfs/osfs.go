@@ -5,15 +5,15 @@ to the os file system. Not all features are supported.
 package osfs // import "bazil.org/fuse/examples/osfs"
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"syscall"
 	"time"
-	"path/filepath"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	"golang.org/x/net/context"
 )
 
 // New returns a new pass-through fs.FS.
@@ -158,7 +158,7 @@ func (d *dir) ReadDirAll(ctx context.Context) (_ []fuse.Dirent, retErr error) {
 		case os.ModeSocket:
 			t = fuse.DT_Socket
 		case os.ModeDevice:
-			if stat.Mode() & os.ModeCharDevice == 0 {
+			if stat.Mode()&os.ModeCharDevice == 0 {
 				t = fuse.DT_Block
 			} else {
 				t = fuse.DT_Char
