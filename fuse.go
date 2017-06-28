@@ -191,6 +191,17 @@ func Mount(dir string, options ...MountOption) (*Conn, error) {
 	return c, nil
 }
 
+func NewFuseConn(dev io.ReadWriteCloser, proto Protocol) *Conn {
+	ready := make(chan struct{}, 1)
+	close(ready)
+	return &Conn{
+		Ready:   ready,
+		dev:     dev,
+		readbuf: make([]byte, maxBufSize),
+		proto:   proto,
+	}
+}
+
 type OldVersionError struct {
 	Kernel     Protocol
 	LibraryMin Protocol
@@ -545,6 +556,10 @@ type malformedMessage struct {
 
 func (malformedMessage) String() string {
 	return "malformed message"
+}
+
+func (c *Conn) Dev() io.ReadWriteCloser {
+	return c.dev
 }
 
 // Close closes the FUSE connection.
