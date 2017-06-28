@@ -124,7 +124,7 @@ type Conn struct {
 
 	// File handle for kernel communication. Only safe to access if
 	// rio or wio is held.
-	dev     *os.File
+	dev     io.ReadWriteCloser
 	wio     sync.RWMutex
 	rio     sync.Mutex
 	readbuf []byte // large buffer for reading kernel requests; guarded by rio
@@ -556,11 +556,6 @@ func (c *Conn) Close() error {
 	return c.dev.Close()
 }
 
-// caller must hold wio or rio
-func (c *Conn) fd() int {
-	return int(c.dev.Fd())
-}
-
 func (c *Conn) Protocol() Protocol {
 	return c.proto
 }
@@ -575,7 +570,7 @@ func (c *Conn) ReadRequest() (Request, error) {
 	var err error
 	c.rio.Lock()
 	for m == nil {
-		n, err = syscall.Read(c.fd(), c.readbuf)
+		n, err = c.dev.Read(c.readbuf)
 		if err == syscall.EINTR {
 			// OSXFUSE sends EINTR to userspace when a request interrupt
 			// completed before it got sent to userspace?
@@ -1134,7 +1129,7 @@ func (c *Conn) writeToKernel(msg []byte) error {
 
 	c.wio.RLock()
 	defer c.wio.RUnlock()
-	nn, err := syscall.Write(c.fd(), msg)
+	nn, err := c.dev.Write(msg)
 	if err == nil && nn != len(msg) && Debug != nil {
 		Debug(bugShortKernelWrite{
 			Written: int64(nn),
